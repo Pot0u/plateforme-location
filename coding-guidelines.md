@@ -114,3 +114,4 @@ Avant de soumettre une nouvelle fonctionnalité, vérifiez :
 3. [ ] Le handler est-il indépendant (pas d'héritage de base) ?
 4. [ ] La validation est-elle gérée par un middleware ou un validateur séparé ?
 5. [ ] Le `DbContext` utilisé est-il celui du module concerné ?
+6. [ ] Les meilleures pratiques EF Core sont-elles respectées (voir `efcore-cqrs-best-practices.md`) ?
