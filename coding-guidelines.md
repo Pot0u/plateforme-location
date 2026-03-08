@@ -56,6 +56,12 @@ public static class RegisterCustomerEndpoint
 
 ## 3. Directives de Développement (Best Practices)
 
+### BFF Endpoints (Backend-for-Frontend)
+- Les endpoints doivent retourner uniquement les données nécessaires au frontend (Angular).
+- Utilisez des DTOs de réponse spécifiques pour chaque endpoint (Data Shaping).
+- Ne retournez JAMAIS les entités de domaine directement.
+- La sécurité (JWT, Cookies) doit être gérée au niveau du BFF.
+
 ### Pas de fuite de logique dans les Endpoints (No Logic Leaking)
 - Les endpoints Minimal API ne doivent contenir **aucune** logique métier, validation complexe ou accès direct à la base de données.
 - Leur seul rôle est de transformer la requête HTTP en un message (Command/Query) et de l'envoyer au bus Wolverine.
@@ -93,8 +99,12 @@ public class RegisterCustomerValidator : AbstractValidator<RegisterCustomer>
 
 ## 5. Tests
 
-- **Tests d'Intégration (Préférés)** : Étant donné que nous utilisons VSA, les tests qui traversent toute la tranche (de l'API à la DB) sont les plus précieux. Utilisez `Alba` pour tester les endpoints avec Wolverine.
-- **Tests Unitaires** : Pour la logique métier complexe isolée dans le handler ou le domaine.
+- **Tests d'Intégration (BFF style)** : Étant donné que nous utilisons VSA, les tests qui traversent toute la tranche (de l'API à la DB) sont les plus précieux.
+- **EF Core In-Memory** : Pour les tests de développement et d'intégration rapide, utilisez `UseInMemoryDatabase`. Cela permet de tester les interactions avec le `DbContext` sans infrastructure complexe.
+- **Alba** : Utilisez `Alba` pour simuler des appels HTTP et vérifier les réponses JSON.
+- **Wolverine Integration** : Testez que les messages sont correctement dispatchés et que les effets de bord (ex: Outbox) sont respectés.
+
+Voir le fichier `testing-guidelines.md` pour plus de détails.
 
 ## 6. Checklist pour l'Agent
 

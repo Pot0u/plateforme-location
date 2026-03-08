@@ -15,7 +15,7 @@ Ce document décrit l'architecture technique de la plateforme de location de dis
 - **Médiateur & Command Bus** : [Wolverine](https://wolverine.netlify.app/) pour le dispatch des messages et le traitement asynchrone.
 - **Accès aux Données** : Entity Framework Core 10 (EF Core).
 - **Base de Données** :   PostgreSQL  
-- **Tests** : xUnit, FluentAssertions.
+- **Tests** : xUnit, FluentAssertions, Alba (Tests d'Intégration), EF Core In-Memory.
 
 ## Structure de la Solution (.NET 10)
 
@@ -45,8 +45,10 @@ src/
           ├── Rental/                         (Futur module)
       ├── Shared/                             (Composants transverses)
           ├── Infrastructure/
-          ├── Validation/
-  ├── PlateformeLocationDisques.Infrastructure/ (Partagée si nécessaire)
+          ├── Validation/   
+      ├── Data/
+      │   ├── AppDbContext.cs
+      │   └── SharedEntities/
 ```
 
 ## Flux de Données (CQRS avec Wolverine)
