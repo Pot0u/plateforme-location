@@ -19,12 +19,23 @@ using Wolverine.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuration EF Core (In-memory pour la démo/bootstrap)
+// Configuration EF Core - Customers Module
+var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase", false);
 builder.Services.AddDbContext<CustomersDbContext>(options =>
-    options.UseInMemoryDatabase("CustomersDb"));
+{
+    if (useInMemoryDb)
+    {
+        options.UseInMemoryDatabase("CustomersDb");
+    }
+    else
+    {
+        var connectionString = builder.Configuration.GetConnectionString("CustomersDb")
+            ?? throw new InvalidOperationException("PostgreSQL connection string 'CustomersDb' is not configured.");
+        options.UseNpgsql(connectionString);
+    }
+});
 
-// Configuration EF Core for Discogs Importation Module
-var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase", true);
+// Configuration EF Core - Discogs Importation Module
 builder.Services.AddDbContext<DiscogsDbContext>(options =>
 {
     if (useInMemoryDb)
@@ -66,6 +77,7 @@ var app = builder.Build();
 // Database initialization
 {
     using var scope = app.Services.CreateScope();
+    var customersDb = scope.ServiceProvider.GetRequiredService<CustomersDbContext>();
     var discogsDb = scope.ServiceProvider.GetRequiredService<DiscogsDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
@@ -75,17 +87,20 @@ var app = builder.Build();
         var runMigrations = !app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("RunMigrations", false);
         if (runMigrations)
         {
+            await customersDb.Database.MigrateAsync();
             await discogsDb.Database.MigrateAsync();
         }
         else
         {
             // In development, ensure database is created
+            await customersDb.Database.EnsureCreatedAsync();
             await discogsDb.Database.EnsureCreatedAsync();
         }
     }
     else
     {
         // For InMemory database, ensure it's created
+        await customersDb.Database.EnsureCreatedAsync();
         await discogsDb.Database.EnsureCreatedAsync();
     }
 
