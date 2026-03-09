@@ -8,6 +8,7 @@ Ce document décrit l'architecture technique de la plateforme de location de dis
 - **Monolithe Modulaire** : Séparation logique du système en modules indépendants (ex: Customer, Catalog, Rental) pour maintenir une haute cohésion et un faible couplage, tout en conservant une unité de déploiement simple.
 - **CQRS (Command Query Responsibility Segregation)** : Séparation des opérations de lecture (Queries) et d'écriture (Commands).
 - **API First & Headless BFF** : L'API est le contrat principal. Le Backend-for-Frontend (BFF) sert de passerelle optimisée pour les clients (ici, un futur client Angular).
+- **HATEOAS (Hypermedia as the Engine of Application State)** : Les réponses de l'API incluent des liens hypermedia (`_links`) qui permettent au client de découvrir dynamiquement les actions disponibles. Le frontend n'a pas besoin de connaître la structure des URLs à l'avance, il les découvre via les liens fournis par l'API.
 
 ## Pile Technologique
 
@@ -59,6 +60,56 @@ src/
    - Les **Commands** modifient l'état via EF Core et peuvent publier des événements.
    - Les **Queries** utilisent EF Core (éventuellement avec `AsNoTracking` ou Dapper) pour retourner des DTOs.
 4. **Réponse** : Le résultat est renvoyé au client Angular via le BFF.
+
+## HATEOAS et Hypermedia dans le BFF
+
+Le pattern HATEOAS (Hypermedia as the Engine of Application State) est un principe REST qui permet au client de découvrir dynamiquement les actions disponibles via des liens hypermedia inclus dans les réponses API.
+
+### Principes
+
+- **Découverte dynamique** : Le client n'a pas besoin de connaître à l'avance toutes les URLs de l'API. Il découvre les actions possibles via les liens fournis dans chaque réponse.
+- **Couplage faible** : Les URLs peuvent changer côté serveur sans impacter le client, tant que les relations (`rel`) restent cohérentes.
+- **BFF optimisé** : Les liens fournis sont adaptés au contexte du client Angular et incluent les paramètres nécessaires (pagination, filtres, etc.).
+
+### Structure des Liens
+
+Chaque réponse DTO inclut un objet `_links` contenant des relations nommées :
+
+```json
+{
+  "items": [...],
+  "totalCount": 100,
+  "page": 1,
+  "pageSize": 20,
+  "_links": {
+    "self": { "href": "/api/discogs/releases?page=1&pageSize=20" },
+    "next": { "href": "/api/discogs/releases?page=2&pageSize=20" },
+    "prev": null,
+    "byGenre": { "href": "/api/discogs/genres" },
+    "byArtist": { "href": "/api/discogs/artists" }
+  }
+}
+```
+
+### Relations Standard
+
+| Relation | Description |
+|----------|-------------|
+| `self` | Lien vers la ressource actuelle |
+| `next` | Page suivante (pagination) |
+| `prev` | Page précédente (pagination) |
+| `first` | Première page |
+| `last` | Dernière page |
+| `item` | Lien vers une ressource individuelle |
+| `collection` | Lien vers la collection parente |
+| `byGenre` | Lien pour filtrer par genre |
+| `byArtist` | Lien pour filtrer par artiste |
+| `genres` | Liste de tous les genres disponibles |
+| `artists` | Liste de tous les artistes disponibles |
+
+### Implémentation
+
+Les liens sont générés dynamiquement dans les Handlers en fonction du contexte de la requête et des données retournées. Chaque Feature peut définir ses propres liens pertinents.
 
 ## Module Customers : Gestion de Compte & Connexion
 

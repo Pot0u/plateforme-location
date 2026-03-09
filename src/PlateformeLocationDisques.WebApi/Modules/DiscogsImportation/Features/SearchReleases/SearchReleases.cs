@@ -1,3 +1,5 @@
+using PlateformeLocationDisques.WebApi.Shared.Hypermedia;
+
 namespace PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.SearchReleases;
 
 /// <summary>
@@ -10,18 +12,19 @@ public record SearchReleases(
 );
 
 /// <summary>
-/// Paginated search results.
+/// Paginated search results with HATEOAS links.
 /// </summary>
 public record SearchReleasesResult(
     ReleaseSearchItemDto[] Items,
     int TotalCount,
     int Page,
     int PageSize,
-    int TotalPages
+    int TotalPages,
+    Links Links
 );
 
 /// <summary>
-/// Lightweight DTO for search results list.
+/// Lightweight DTO for search results list with HATEOAS links.
 /// </summary>
 public record ReleaseSearchItemDto(
     string Id,
@@ -32,5 +35,6 @@ public record ReleaseSearchItemDto(
     string[] Genres,
     string[] Artists,
     string? Thumb,
-    string? Format
+    string? Format,
+    Links Links
 );

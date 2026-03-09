@@ -9,7 +9,11 @@ using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetRe
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.SearchReleases;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetReleasesByGenre;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetReleasesByArtist;
+using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetAllGenres;
+using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetAllArtists;
+using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetAllMasterReleases;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Infrastructure;
+using Scalar.AspNetCore;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 
@@ -29,8 +33,8 @@ builder.Services.AddDbContext<DiscogsDbContext>(options =>
     }
     else
     {
-        var connectionString = builder.Configuration.GetConnectionString("DiscogsConnection")
-            ?? throw new InvalidOperationException("PostgreSQL connection string 'DiscogsConnection' is not configured.");
+        var connectionString = builder.Configuration.GetConnectionString("DiscogsDb")
+            ?? throw new InvalidOperationException("PostgreSQL connection string 'DiscogsDb' is not configured.");
         options.UseNpgsql(connectionString);
     }
 });
@@ -59,17 +63,43 @@ builder.Services.AddOpenApi(); // .NET 10 style
 
 var app = builder.Build();
 
-// Run migrations in non-development environments
-if (!app.Environment.IsDevelopment() && !useInMemoryDb)
+// Database initialization
 {
     using var scope = app.Services.CreateScope();
     var discogsDb = scope.ServiceProvider.GetRequiredService<DiscogsDbContext>();
-    await discogsDb.Database.MigrateAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    if (!useInMemoryDb)
+    {
+        // Run migrations in non-development environments or if explicitly requested via environment variable
+        var runMigrations = !app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("RunMigrations", false);
+        if (runMigrations)
+        {
+            await discogsDb.Database.MigrateAsync();
+        }
+        else
+        {
+            // In development, ensure database is created
+            await discogsDb.Database.EnsureCreatedAsync();
+        }
+    }
+    else
+    {
+        // For InMemory database, ensure it's created
+        await discogsDb.Database.EnsureCreatedAsync();
+    }
+
+    // Seed database in development if configured (works for both InMemory and PostgreSQL)
+    if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("SeedDatabase", false))
+    {
+        await DatabaseSeeder.SeedAsync(discogsDb, logger);
+    }
 }
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
@@ -86,6 +116,11 @@ app.MapGetReleaseById();
 app.MapSearchReleases();
 app.MapGetReleasesByGenre();
 app.MapGetReleasesByArtist();
+
+// Browse endpoints with HATEOAS
+app.MapGetAllMasterReleases();
+app.MapGetAllGenres();
+app.MapGetAllArtists();
 
 app.MapGet("/", () => "Plateforme Location Disques API");
 
