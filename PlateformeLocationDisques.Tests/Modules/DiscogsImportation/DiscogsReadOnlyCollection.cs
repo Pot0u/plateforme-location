@@ -3,7 +3,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation;
 
-[CollectionDefinition("Discogs Read-Only Collection")]
+[CollectionDefinition(nameof(DiscogsReadOnlyCollection))]
 public class DiscogsReadOnlyCollection : ICollectionFixture<DiscogsReadOnlyFixture>
 {
 }

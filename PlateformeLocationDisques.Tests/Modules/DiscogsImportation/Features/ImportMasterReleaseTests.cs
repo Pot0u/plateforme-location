@@ -10,7 +10,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation.Features;
 
-[Collection("Discogs Isolated Collection")]
+[Collection(nameof(DiscogsIsolatedCollection))]
 public class ImportMasterReleaseTests
 {
     private readonly DiscogsIsolatedFixture _fixture;

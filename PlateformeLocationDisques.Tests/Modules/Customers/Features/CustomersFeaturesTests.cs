@@ -7,7 +7,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.Customers.Features;
 
-[Collection("Customers Collection")]
+[Collection(nameof(CustomersCollection))]
 public class CustomersFeaturesTests
 {
     private readonly CustomersFixture _fixture;

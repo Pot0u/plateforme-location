@@ -3,7 +3,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.Customers;
 
-[CollectionDefinition("Customers Collection")]
+[CollectionDefinition(nameof(CustomersCollection))]
 public class CustomersCollection : ICollectionFixture<CustomersFixture>
 {
 }

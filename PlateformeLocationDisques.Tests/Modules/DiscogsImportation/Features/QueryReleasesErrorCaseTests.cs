@@ -4,7 +4,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation.Features;
 
-[Collection("Discogs Error-Case Collection")]
+[Collection(nameof(DiscogsErrorCaseCollection))]
 public class QueryReleasesErrorCaseTests
 {
     private readonly DiscogsErrorCaseFixture _fixture;

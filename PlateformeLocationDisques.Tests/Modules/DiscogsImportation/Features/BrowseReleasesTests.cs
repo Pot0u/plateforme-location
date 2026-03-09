@@ -8,7 +8,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation.Features;
 
-[Collection("Discogs Read-Only Collection")]
+[Collection(nameof(DiscogsReadOnlyCollection))]
 public class BrowseReleasesTests
 {
     private readonly DiscogsReadOnlyFixture _fixture;

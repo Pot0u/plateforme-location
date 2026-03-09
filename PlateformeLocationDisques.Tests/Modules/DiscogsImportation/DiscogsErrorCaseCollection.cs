@@ -3,7 +3,7 @@ using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation;
 
-[CollectionDefinition("Discogs Error-Case Collection")]
+[CollectionDefinition(nameof(DiscogsErrorCaseCollection))]
 public class DiscogsErrorCaseCollection : ICollectionFixture<DiscogsErrorCaseFixture>
 {
 }
