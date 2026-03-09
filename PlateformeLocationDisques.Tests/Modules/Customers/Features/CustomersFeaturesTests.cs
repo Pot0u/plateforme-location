@@ -1,33 +1,26 @@
 using Alba;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+using PlateformeLocationDisques.Tests.Helpers;
 using PlateformeLocationDisques.WebApi.Modules.Customers.Features.Login;
 using PlateformeLocationDisques.WebApi.Modules.Customers.Features.Register;
-using PlateformeLocationDisques.WebApi.Modules.Customers.Infrastructure;
-using PlateformeLocationDisques.WebApi.Modules.Customers.Domain;
+using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.Customers.Features;
 
+[Collection("Customers Collection")]
 public class CustomersFeaturesTests
 {
+    private readonly CustomersFixture _fixture;
+
+    public CustomersFeaturesTests(CustomersFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     [Fact]
     public async Task Register_And_Login_Should_Work_Together()
     {
-        // 1. Setup host with unique in-memory DB
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                // Replace the DB with a unique in-memory instance for this test
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<CustomersDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-                
-                services.AddDbContext<CustomersDbContext>(options => 
-                    options.UseInMemoryDatabase(dbName));
-            });
-        });
+        var host = _fixture.Host;
 
         // 2. Register a new customer
         var registerCommand = new RegisterCustomer("test@example.com", "P@ssword123", "Test User");
@@ -58,16 +51,7 @@ public class CustomersFeaturesTests
     [Fact]
     public async Task Login_Should_Fail_With_Wrong_Credentials()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.AddDbContext<CustomersDbContext>(options => 
-                    options.UseInMemoryDatabase(dbName));
-            });
-        });
+        var host = _fixture.Host;
 
         // Act
         var loginRequest = new LoginRequest("nonexistent@example.com", "wrongpass");

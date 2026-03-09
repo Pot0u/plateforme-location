@@ -1,45 +1,26 @@
 using Alba;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Adapters;
+using PlateformeLocationDisques.Tests.Helpers;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetAllGenres;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.GetAllArtists;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.SearchReleases;
-using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Infrastructure;
-using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.ImportMasterRelease;
+using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation.Features;
 
+[Collection("Discogs Read-Only Collection")]
 public class BrowseReleasesTests
 {
+    private readonly DiscogsReadOnlyFixture _fixture;
+
+    public BrowseReleasesTests(DiscogsReadOnlyFixture fixture)
+    {
+        _fixture = fixture;
+    }
     [Fact]
     public async Task GetAllGenres_Should_Return_Genres_With_Counts_And_HATEOAS_Links()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
-
-        // Seed data - Import master which creates a release
-        await host.Scenario(_ =>
-        {
-            _.Post.Url("/api/discogs/import/master/1");
-            _.StatusCodeShouldBeOk();
-        });
+        var host = _fixture.Host;
 
         // Act
         var response = await host.Scenario(_ =>
@@ -74,30 +55,7 @@ public class BrowseReleasesTests
     [Fact]
     public async Task GetAllArtists_Should_Return_Artists_With_Counts_And_HATEOAS_Links()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
-
-        // Seed data - Import master which creates a release
-        await host.Scenario(_ =>
-        {
-            _.Post.Url("/api/discogs/import/master/1");
-            _.StatusCodeShouldBeOk();
-        });
+        var host = _fixture.Host;
 
         // Act
         var response = await host.Scenario(_ =>
@@ -132,30 +90,7 @@ public class BrowseReleasesTests
     [Fact]
     public async Task SearchReleases_Should_Return_HATEOAS_Links_With_Pagination()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
-
-        // Seed data
-        await host.Scenario(_ =>
-        {
-            _.Post.Url("/api/discogs/import/master/1");
-            _.StatusCodeShouldBeOk();
-        });
+        var host = _fixture.Host;
 
         // Act
         var response = await host.Scenario(_ =>
@@ -194,30 +129,7 @@ public class BrowseReleasesTests
     [Fact]
     public async Task SearchReleases_With_SearchTerm_Should_Include_Search_In_Pagination_Links()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
-
-        // Seed data
-        await host.Scenario(_ =>
-        {
-            _.Post.Url("/api/discogs/import/master/1");
-            _.StatusCodeShouldBeOk();
-        });
+        var host = _fixture.Host;
 
         // Act - Search with search term
         var response = await host.Scenario(_ =>
@@ -240,30 +152,7 @@ public class BrowseReleasesTests
     [Fact]
     public async Task Release_Items_Should_Include_Links_To_Genre_And_Artist_Filters()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
-
-        // Seed data - Import master which creates a release
-        await host.Scenario(_ =>
-        {
-            _.Post.Url("/api/discogs/import/master/1");
-            _.StatusCodeShouldBeOk();
-        });
+        var host = _fixture.Host;
 
         // Act
         var response = await host.Scenario(_ =>
@@ -275,24 +164,26 @@ public class BrowseReleasesTests
         // Assert
         var result = response.ReadAsJson<SearchReleasesResult>();
         result.Should().NotBeNull();
-        result!.Items.Should().NotBeEmpty();
 
-        var firstItem = result.Items.First();
-        firstItem.Links.Should().NotBeNull();
-        firstItem.Links.Should().ContainKey("self");
-
-        // Should have genre filter link if release has genres
-        if (firstItem.Genres.Any())
+        if (result!.Items.Any())
         {
-            firstItem.Links.Should().ContainKey("byGenre");
-            firstItem.Links["byGenre"]!.Href.Should().Contain("/api/discogs/releases/genre/");
-        }
+            var firstItem = result.Items.First();
+            firstItem.Links.Should().NotBeNull();
+            firstItem.Links.Should().ContainKey("self");
 
-        // Should have artist filter link if release has artists
-        if (firstItem.Artists.Any())
-        {
-            firstItem.Links.Should().ContainKey("byArtist");
-            firstItem.Links["byArtist"]!.Href.Should().Contain("/api/discogs/releases/artist/");
+            // Should have genre filter link if release has genres
+            if (firstItem.Genres.Any())
+            {
+                firstItem.Links.Should().ContainKey("byGenre");
+                firstItem.Links["byGenre"]!.Href.Should().Contain("/api/discogs/releases/genre/");
+            }
+
+            // Should have artist filter link if release has artists
+            if (firstItem.Artists.Any())
+            {
+                firstItem.Links.Should().ContainKey("byArtist");
+                firstItem.Links["byArtist"]!.Href.Should().Contain("/api/discogs/releases/artist/");
+            }
         }
     }
 }

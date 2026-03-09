@@ -1,37 +1,28 @@
 using Alba;
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PlateformeLocationDisques.Tests.Helpers;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Adapters;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Features.ImportMasterRelease;
 using PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Infrastructure;
+using Xunit;
 
 namespace PlateformeLocationDisques.Tests.Modules.DiscogsImportation.Features;
 
+[Collection("Discogs Isolated Collection")]
 public class ImportMasterReleaseTests
 {
+    private readonly DiscogsIsolatedFixture _fixture;
+
+    public ImportMasterReleaseTests(DiscogsIsolatedFixture fixture)
+    {
+        _fixture = fixture;
+    }
     [Fact]
     public async Task ImportMasterRelease_Should_Import_From_FakeClient_Successfully()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                // Replace DiscogsDbContext with unique in-memory instance
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                // Ensure FakeDiscogsClient is used (should already be the case in test environment)
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
+        var host = _fixture.Host;
 
         // Act - Import master release with ID 1 (Pink Floyd from FakeDiscogsClient)
         var response = await host.Scenario(_ =>
@@ -52,23 +43,7 @@ public class ImportMasterReleaseTests
     [Fact]
     public async Task ImportMasterRelease_Should_Return_Existing_If_Already_Imported()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
+        var host = _fixture.Host;
 
         // Act - Import twice
         var firstResponse = await host.Scenario(_ =>
@@ -95,23 +70,7 @@ public class ImportMasterReleaseTests
     [Fact]
     public async Task ImportMasterRelease_Should_Persist_Complete_Data()
     {
-        // Arrange
-        var dbName = Guid.NewGuid().ToString();
-        using var host = await AlbaHost.For<Program>(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<DiscogsDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-
-                services.AddDbContext<DiscogsDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-
-                var clientDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDiscogsClient));
-                if (clientDescriptor != null) services.Remove(clientDescriptor);
-                services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
-            });
-        });
+        var host = _fixture.Host;
 
         // Act - Import master release
         var response = await host.Scenario(_ =>

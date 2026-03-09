@@ -20,7 +20,8 @@ using Wolverine.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuration EF Core - Customers Module
-var useInMemoryDb = builder.Configuration.GetValue<bool>("UseInMemoryDatabase", false);
+var useInMemoryDb = builder.Environment.IsEnvironment("Test") || 
+                    builder.Configuration.GetValue<bool>("UseInMemoryDatabase", false);
 builder.Services.AddDbContext<CustomersDbContext>(options =>
 {
     if (useInMemoryDb)
