@@ -19,28 +19,105 @@ Pour les tests, nous configurons le `DbContext` pour utiliser `UseInMemoryDataba
 ### Alba pour les tests HTTP
 Alba permet de faire tourner l'application en mémoire et de l'interroger avec un client HTTP simulé.
 
+## 3. Stratégie d'Isolation avec XUnit Fixtures et Collections
+
+### Principes
+Nous utilisons une stratégie d'**isolation intelligente + partage** basée sur les patterns de mutation des tests :
+
+1. **Tests Read-Only** : Partagent une fixture pré-seedée (données communes)
+2. **Tests Mutants** : Chacun a sa propre fixture isolée (base de données unique)
+3. **Tests Error-Case** : Fixture légère sans seeding
+
+### Fixtures Disponibles
+
+#### CustomersFixture
 ```csharp
-[Fact]
-public async Task Should_Register_New_Customer()
+[Collection(nameof(CustomersCollection))]
+public class CustomersFeaturesTests
 {
-    // Arrange
-    using var host = await AlbaHost.For<Program>(builder => {
-        builder.ConfigureServices(services => {
-            // Remplacer la DB par In-Memory si nécessaire
-            services.AddDbContext<CustomersDbContext>(options => 
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
-        });
-    });
+    private readonly CustomersFixture _fixture;
 
-    // Act
-    var response = await host.PostJson(new RegisterCustomer("test@test.com", "password", "Test User"), "/api/customers/register");
+    public CustomersFeaturesTests(CustomersFixture fixture)
+    {
+        _fixture = fixture;
+    }
 
-    // Assert
-    response.StatusCodeShouldBe(200);
-    var result = response.ReadAsJson<CustomerRegistered>();
-    result.Id.ShouldNotBe(Guid.Empty);
+    [Fact]
+    public async Task Should_Register_New_Customer()
+    {
+        var host = _fixture.Host;
+        // Utiliser host pour les tests
+    }
 }
 ```
+
+#### DiscogsReadOnlyFixture
+Pré-seede les données une fois, partagée entre tous les tests read-only du groupe :
+```csharp
+[Collection(nameof(DiscogsReadOnlyCollection))]
+public class BrowseReleasesTests
+{
+    private readonly DiscogsReadOnlyFixture _fixture;
+    // Les données sont déjà importées via /api/discogs/import/master/1
+}
+```
+
+#### DiscogsIsolatedFixture
+Chaque test obtient sa propre base de données isolée pour les mutations :
+```csharp
+[Collection(nameof(DiscogsIsolatedCollection))]
+public class ImportMasterReleaseTests
+{
+    private readonly DiscogsIsolatedFixture _fixture;
+    // Chaque test a une DB unique
+}
+```
+
+#### DiscogsErrorCaseFixture
+Configuration légère pour les tests d'erreur sans seeding :
+```csharp
+[Collection(nameof(DiscogsErrorCaseCollection))]
+public class QueryReleasesErrorCaseTests
+{
+    private readonly DiscogsErrorCaseFixture _fixture;
+    // Pas de données pré-seedées
+}
+```
+
+### Utilisation des Collections avec nameof
+Toujours utiliser `nameof` pour les références de collection (pas de strings) :
+
+```csharp
+// ✅ BON
+[Collection(nameof(CustomersCollection))]
+[CollectionDefinition(nameof(CustomersCollection))]
+
+// ❌ MAUVAIS
+[Collection("Customers Collection")]
+[CollectionDefinition("Customers Collection")]
+```
+
+Cela permet :
+- Validation au compile-time
+- Refactoring automatique des noms
+- Évite les avertissements "classe inutilisée"
+
+### Exemple Complet : Stratégie par Module
+
+**Customers Module :**
+- `CustomersFixture` + `CustomersCollection`
+- Tests : `CustomersFeaturesTests`
+
+**Discogs Module :**
+- `DiscogsReadOnlyFixture` + `DiscogsReadOnlyCollection` → BrowseReleasesTests, QueryReleasesTests (read-only)
+- `DiscogsIsolatedFixture` + `DiscogsIsolatedCollection` → ImportMasterReleaseTests
+- `DiscogsErrorCaseFixture` + `DiscogsErrorCaseCollection` → QueryReleasesErrorCaseTests
+
+### Avantages de cette Approche
+- **Zéro duplication** : Pas de `builder.ConfigureServices` répété dans chaque test
+- **Performance** : Tests read-only partagent les données pré-seedées
+- **Sécurité** : Tests mutants isolés, pas d'interférence
+- **Maintenabilité** : Stratégie claire et cohérente par type de test
 
 ## 3. Structure des Tests
 
