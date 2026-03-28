@@ -52,13 +52,16 @@ public static class RegisterCustomerEndpoint
         .WithTags("Customers");
     }
 }
-```
+```x
 
 ## 3. Directives de Développement (Best Practices)
 
-### BFF Endpoints (Backend-for-Frontend)
-- Les endpoints doivent retourner uniquement les données nécessaires au frontend (Angular).
+### BFF Endpoints (Backend-for-Frontend) and Adapters
+- Les endpoints doivent  un pattern Result  nécessaires au frontend (Angular).
+- Le front end a besoin  de connaitre les raisons en cas d'echec de traitement dans le endpoint (et potentiellement les adapteurs), ne pas retourner null
+- pas de try/catch, il sera géré par la web application
 - Utilisez des DTOs de réponse spécifiques pour chaque endpoint (Data Shaping).
+- ces règles s'appliquent pour les Adapters aussi
 - Ne retournez JAMAIS les entités de domaine directement.
 - La sécurité (JWT, Cookies) doit être gérée au niveau du BFF.
 

@@ -34,15 +34,13 @@ public static class ImportMasterReleaseHandler
         }
 
         // Fetch from Discogs API
-        var masterDto = await discogsClient.GetMasterReleaseAsync(command.DiscogsId, cancellationToken);
+        var result = await discogsClient.GetMasterReleaseAsync(command.DiscogsId, cancellationToken);
 
-        if (masterDto == null)
-        {
-            throw new InvalidOperationException($"Master release with ID {command.DiscogsId} not found in Discogs API.");
-        }
+        if (!result.IsSuccess)
+            throw new InvalidOperationException(result.ErrorMessage);
 
         // Map DTO to domain entity
-        var masterRelease = MapToEntity(masterDto);
+        var masterRelease = MapToEntity(result.Value!);
 
         // Save to database
         dbContext.MasterReleases.Add(masterRelease);

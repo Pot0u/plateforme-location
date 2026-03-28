@@ -1,9 +1,5 @@
 namespace PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Adapters;
 
-/// <summary>
-/// Fake implementation of the Discogs API client for testing purposes.
-/// Returns pre-defined test data without making actual API calls.
-/// </summary>
 public class FakeDiscogsClient : IDiscogsClient
 {
     private readonly Dictionary<int, DiscogsMasterReleaseDto> _masterReleases = new();
@@ -14,29 +10,27 @@ public class FakeDiscogsClient : IDiscogsClient
         SeedTestData();
     }
 
-    public Task<DiscogsMasterReleaseDto?> GetMasterReleaseAsync(int masterId, CancellationToken cancellationToken = default)
+    public Task<DiscogsResult<DiscogsMasterReleaseDto>> GetMasterReleaseAsync(int masterId, CancellationToken cancellationToken = default)
     {
-        _masterReleases.TryGetValue(masterId, out var masterRelease);
-        return Task.FromResult(masterRelease);
+        if (_masterReleases.TryGetValue(masterId, out var masterRelease))
+            return Task.FromResult(DiscogsResult<DiscogsMasterReleaseDto>.Success(masterRelease));
+
+        return Task.FromResult(DiscogsResult<DiscogsMasterReleaseDto>.NotFound(masterId));
     }
 
-    public Task<DiscogsReleaseDto?> GetReleaseAsync(int releaseId, CancellationToken cancellationToken = default)
+    public Task<DiscogsResult<DiscogsReleaseDto>> GetReleaseAsync(int releaseId, CancellationToken cancellationToken = default)
     {
-        _releases.TryGetValue(releaseId, out var release);
-        return Task.FromResult(release);
+        if (_releases.TryGetValue(releaseId, out var release))
+            return Task.FromResult(DiscogsResult<DiscogsReleaseDto>.Success(release));
+
+        return Task.FromResult(DiscogsResult<DiscogsReleaseDto>.NotFound(releaseId));
     }
 
-    /// <summary>
-    /// Adds a fake master release for testing
-    /// </summary>
     public void AddFakeMasterRelease(DiscogsMasterReleaseDto masterRelease)
     {
         _masterReleases[masterRelease.Id] = masterRelease;
     }
 
-    /// <summary>
-    /// Adds a fake release for testing
-    /// </summary>
     public void AddFakeRelease(DiscogsReleaseDto release)
     {
         _releases[release.Id] = release;
@@ -44,7 +38,6 @@ public class FakeDiscogsClient : IDiscogsClient
 
     private void SeedTestData()
     {
-        // Sample Master Release: Pink Floyd - The Dark Side of the Moon
         var darkSideMaster = new DiscogsMasterReleaseDto(
             Id: 1,
             Title: "The Dark Side Of The Moon",
@@ -116,7 +109,6 @@ public class FakeDiscogsClient : IDiscogsClient
 
         _masterReleases[1] = darkSideMaster;
 
-        // Sample Release (specific pressing)
         var darkSideRelease = new DiscogsReleaseDto(
             Id: 1000,
             Title: "The Dark Side Of The Moon",
@@ -181,16 +173,8 @@ public class FakeDiscogsClient : IDiscogsClient
             ],
             Identifiers:
             [
-                new DiscogsIdentifierDto(
-                    Type: "Barcode",
-                    Value: "5099902894713",
-                    Description: null
-                ),
-                new DiscogsIdentifierDto(
-                    Type: "Matrix / Runout",
-                    Value: "SHVL 804 A-1",
-                    Description: "Side A"
-                )
+                new DiscogsIdentifierDto(Type: "Barcode", Value: "5099902894713", Description: null),
+                new DiscogsIdentifierDto(Type: "Matrix / Runout", Value: "SHVL 804 A-1", Description: "Side A")
             ],
             Images:
             [

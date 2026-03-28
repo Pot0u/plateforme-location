@@ -1,32 +1,11 @@
 namespace PlateformeLocationDisques.WebApi.Modules.DiscogsImportation.Adapters;
 
-/// <summary>
-/// Adapter interface for Discogs API client.
-/// This abstraction allows for easy testing with fake implementations.
-/// </summary>
 public interface IDiscogsClient
 {
-    /// <summary>
-    /// Retrieves a master release from Discogs by its master ID.
-    /// </summary>
-    /// <param name="masterId">The Discogs master release ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The master release data as a DTO</returns>
-    Task<DiscogsMasterReleaseDto?> GetMasterReleaseAsync(int masterId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieves a specific release from Discogs by its release ID.
-    /// </summary>
-    /// <param name="releaseId">The Discogs release ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The release data as a DTO</returns>
-    Task<DiscogsReleaseDto?> GetReleaseAsync(int releaseId, CancellationToken cancellationToken = default);
+    Task<DiscogsResult<DiscogsMasterReleaseDto>> GetMasterReleaseAsync(int masterId, CancellationToken cancellationToken = default);
+    Task<DiscogsResult<DiscogsReleaseDto>> GetReleaseAsync(int releaseId, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// DTO representing a Discogs Master Release response.
-/// Matches the structure from the Discogs API.
-/// </summary>
 public record DiscogsMasterReleaseDto(
     int Id,
     string Title,
@@ -55,9 +34,6 @@ public record DiscogsMasterReleaseDto(
     DateTime DateChanged
 );
 
-/// <summary>
-/// DTO representing a Discogs Release response.
-/// </summary>
 public record DiscogsReleaseDto(
     int Id,
     string Title,
