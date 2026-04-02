@@ -13,15 +13,17 @@
 Pourquoi ce choix ? 
 
 ```
-
-
+(Il faut savoir que je n'ai vu aucun des 2, seulement le MVC)
+L'organisation en `Features/` regroupe par fonctionnalité dans un seul dossier, comme dans ce projet les Login/Resgister. 
+L'autre méthode regroupe par code de type technique. 
+Donc `Features/` rend le code plus facile à lire et à modifier car tout se trouve dans le même dossier.
 
 ```
 
 Quel est l'avantage concret pour un développeur qui travaille sur une seule fonctionnalité ?
 
 ```
-
+L'avantage est pour un développeur qui travaille sur une seule fonctionnalité et qu'il trouve tout dans son dossier.
 
 
 ```
@@ -33,7 +35,7 @@ Quel est l'avantage concret pour un développeur qui travaille sur une seule fon
 Pourquoi ne pas utiliser un seul `DbContext` partagé pour toute l'application ?
 
 ```
-
+Avoir un `DbContext` par module permet de gérer leurs BD chacun de leur côté.
 
 
 ```
