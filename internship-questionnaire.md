@@ -36,7 +36,9 @@ Pourquoi ne pas utiliser un seul `DbContext` partagé pour toute l'application ?
 
 ```
 Avoir un `DbContext` par module permet de gérer leurs BD chacun de leur côté.
-
+S'il y en avait qu'un seul, il aurait géré toutes les tables de l'application.
+Donc on évite pour ne pas avoir un gros fichier, et ça aurait été difficile à maintenir.
+(Je pense)
 
 ```
 
@@ -47,7 +49,16 @@ Avoir un `DbContext` par module permet de gérer leurs BD chacun de leur côté.
 a) Où est décidé laquelle des deux est utilisée à l'exécution ?
 
 ```
-
+Dans `program.cs`
+// Use FakeDiscogsClient in Development, real client in Production
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<IDiscogsClient, FakeDiscogsClient>();
+}
+else
+{
+    builder.Services.AddHttpClient<IDiscogsClient, DiscogsApiClient>();
+}
 
 
 ```
@@ -56,7 +67,8 @@ a) Où est décidé laquelle des deux est utilisée à l'exécution ?
 b) Pourquoi ce mécanisme plutôt que d'appeler directement l'API Discogs partout dans le code ?
 
 ```
-
+Pour quand on fait des tests on utilise le fake, et quand il est en production on utilise le vrai.
+Et on l'utilise dans program.cs pour le faire dans un seul endroit pour éviter des if/else partout dans l'API discogs.
 
 
 ```
