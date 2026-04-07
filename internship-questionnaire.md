@@ -80,20 +80,20 @@ Et on l'utilise dans program.cs pour le faire dans un seul endroit pour éviter 
 
 - Quel fichier reçoit la requête en premier ?
 ```
-
+Le fichier ImportMasterReleaseEndpoint.cs
 
 
 ```
 - Que se passe-t-il ensuite (sans décrire le code ligne par ligne — décris les étapes logiques) ?
 ```
-
+Il récupère l'ID dans la requête, et crée un message "ImportMasterRelease" et importe le message correspondant à l'ID
 
 
 ```
 - Quel objet est retourné au client ? Comment le client peut-il utiliser cet objet ?
 ```
-
-
+Un objet MasterReleaseImported
+Le client peut lire l'`Id`, le `DiscogsId`, le `Title` et `AlreadyExisted` pour savoir si l'import a créé une nouvelle ligne.
 
 
 
@@ -105,9 +105,9 @@ Et on l'utilise dans program.cs pour le faire dans un seul endroit pour éviter 
 
 Est-ce que tu reconnaîs ce mécanisme ? Comment s'appelle-t-il et pourquoi est intéressant ici ?
 ```
-
-
-
+Non mais c'est de la *Dependency Injection* ou *Method Injection*.
+C'est intéressant car code plus court et plus lisible, moins de boilerplate (pas de champs privés + constructeur)
+et test plus simple (ex on remplace facilement `FakeDiscogsClient`.
 
 
 
@@ -120,18 +120,15 @@ Est-ce que tu reconnaîs ce mécanisme ? Comment s'appelle-t-il et pourquoi est 
 ```csharp
 opts.UseEntityFrameworkCoreTransactions();
 
-
-
-
-
-
+Elle dit à Wolverine d'utiliser *automatiquement les transactions EF Core* pour chaque handler.
+Si le handler s'exécute sans erreur, la transaction se commit. Sinon, elle roll back.
 ```
 
 Quel problème cela résout-il sans que le développeur ait à y penser ?
-`
+
 ```
-
-
+le développeur n'a pas à gérer manuellement les transactions (pas de BeginTransaction(), Commit(), Rollback()).
+Wolverine le fait automatiquement. Soit tout s'enregistre en base, soit rien ne s'enregistre (en cas d'erreur).
 
 ````
 
@@ -144,15 +141,16 @@ Quel problème cela résout-il sans que le développeur ait à y penser ?
 a) Quelle est la différence principale entre un ULID et un GUID ?
 
 ```
+ULID = sortable lexicographiquement (conserve l'ordre chronologique)
+GUID = aléatoire pur (non-sortable)
 
-
-
+Donc les ULIDs gardent l'ordre chronologique de création, ce que les GUIDs ne font pas.
 ```
 
 b) Pourquoi ce choix peut être intéressant pour une base de données ?
 
 ```
-
+Car il a un index B-Tree plus efficace, les insertions se font toujours à la fin, et plus simple pour le debugage car c'est dans l'ordre chronologique.
 
 
 ```
