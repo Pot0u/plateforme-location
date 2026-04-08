@@ -150,7 +150,8 @@ Donc les ULIDs gardent l'ordre chronologique de création, ce que les GUIDs ne f
 b) Pourquoi ce choix peut être intéressant pour une base de données ?
 
 ```
-Car il a un index B-Tree plus efficace, les insertions se font toujours à la fin, et plus simple pour le debugage car c'est dans l'ordre chronologique.
+Car il a un index B-Tree plus efficace, les insertions se font toujours à la fin,
+et plus simple pour le debugage car c'est dans l'ordre chronologique.
 
 
 ```
@@ -166,16 +167,17 @@ masterRelease.Property(m => m.Genres)
 
 Qu'est-ce que `jsonb` dans PostgreSQL ?
 ```
+C'est du JSON, mais optimisé pour la recherche/requête et plus compact qu'un simple string JSON.
 
-
-
+jsonb = JSON BINARY
 ```
 
 
 Pourquoi stocker les genres ainsi plutôt que dans une table séparée ?
 ```
-
-
+Pas besoin de JOIN donc gain de perf,
+une structure flexible en cas de changement de format
+et c'est plus simple car il y a moins de tables.
 
 ```
 
@@ -189,16 +191,17 @@ masterRelease.OwnsMany(m => m.Tracklist, track => { ... });
 
 Qu'est-ce qu'un "Owned Type" en EF Core ? 
 ```
-
-
+C'est une entité qui n'existe que dans le contexte d'une entité propriétaire.
+Il n'a pas d'ID indépendant et est supprimé automatiquement si l'entité prioritaire est supprimée.
 
 ```
 
 
 Quel est l'avantage par rapport à une entité indépendante avec sa propre table ?
 ```
-
-
+Le Owned Type à moins de tables, tracks ne peuvent exister sans release (Intégrité garantie)
+et un gain de performance car pas de join complexes.
+Alors que une entité indépendante à les tables et index séparés et une complexité des JOINs
 
 ```
 
@@ -211,7 +214,7 @@ Quel est l'avantage par rapport à une entité indépendante avec sa propre tabl
 Pourquoi avoir trois fixtures différentes plutôt qu'une seule ? 
 
 ```
-
+Chacune teste un scénario différent (lecture, isolation, erreurs), une seule fixture aurait une logique complexe et inflexible.
 
 
 ```
@@ -219,8 +222,9 @@ Pourquoi avoir trois fixtures différentes plutôt qu'une seule ?
 Explique dans quel cas tu utiliserais chacune.
 
 ```
-
-
+`DiscogsReadOnlyFixture` : tests de recherche
+`DiscogsIsolatedFixture` : tests de création/insertion
+`DiscogsErrorCaseFixture` : tests des erreurs
 
 ```
 ---
@@ -234,8 +238,9 @@ public class CustomersCollection : ICollectionFixture<CustomersFixture> { }
 
 Pourquoi utiliser `nameof()` ici plutôt qu'une chaîne de caractères en dur comme `"CustomersCollection"` ?
 ```
-
-
+`nameof()` retourne le nom du symbole sous forme de string à la compilation.
+Ça évite de faire des erreurs de typographie, le nom de la collection est lié au nom réel de la classe donc
+pas d'incohérence possible.
 
 ```
 
@@ -245,15 +250,15 @@ Pourquoi utiliser `nameof()` ici plutôt qu'une chaîne de caractères en dur co
 
 Quelle est la différence fondamentale ?
 ```
-
-
-
+Un appel `HttpClient` a besoin d'un serveur en écoute en local ou à distance, il a donc besoin d'un vrai réseau.
+Un appel Alba test directement dans le processus sans passer par le réseau HTTP.
 ```
 
 Pourquoi Alba est-il plus adapté aux tests d'intégration dans ce contexte ?
 ```
-
-
+Il est plus adapté car il n'aura pas de latence réseau donc des tests plus rapides,
+un accès direct à la BD après l'appel, pas besoin de lancer un serveur
+et accès direct aux logs et exceptions.
 
 ```
 
@@ -265,31 +270,39 @@ Pourquoi Alba est-il plus adapté aux tests d'intégration dans ce contexte ?
 
 a) Quels sont les cas d'erreur possibles (regarde le code) ?
 ```
-
+4 cas d'erreur possibles :
+NotFound : la ressource n'existe pas
+ApiError : erreur HTTP
+NetworkError : problème réseau
+DeserializationError : JSON invalide
 
 
 ```
 b) Quelle est la différence entre cette approche et lever une exception directement ?
 ```
+Avec DiscogsResult l'erreur est une valeur retournée, pas besoin de try/catch,
+facile à tester et il est plus lisible.
 
-
-
+Alors qu'une levée d'exception doit gérer le try/catch à chaque appel et
+difficile à tester.
 ```
 c) Quel avantage concret pour le code appelant ?
 ```
-
-
+Le code n'a besoin que d'une ligne `if (!result.IsSuccess)` sans try/catch.
+Il peut traiter chaque erreur différemment selon le type sans multiples catch.
 
 ```
 ---
 
 **Q14.** Dans ce projet, les handlers ne contiennent **aucun `try/catch`**. Pourtant des erreurs peuvent survenir (réseau, base de données, etc.).
 
-Comment sont-elles gérées ? Qui s'en occupe  ou devrait s'en occuper?
+Comment sont-elles gérées ? Qui s'en occupe ou devrait s'en occuper?
 ```
+Les erreurs sont gérées par le handler qui lève une exception non attrapée puis
+Wolverine attrape toutes les exceptions levées par les handlers et
+Wolverine/ASP.NET Core les convertit en réponse HTTP (par défaut 500)
 
-
-
+Donc Wolverine et ASP.NET s'en occupent.
 ```
 
 ---
@@ -311,15 +324,21 @@ Comment sont-elles gérées ? Qui s'en occupe  ou devrait s'en occuper?
 
 a) Comment s'appelle ce principe de design d'API ?
 ```
+HATEOAS = Hypermedia As The Engine Of Application State.
 
+L'API retourne non seulement des données, mais aussi des liens (hypermedia) qui indiquent :
+- Comment accéder à la ressource elle-même (self)
+- Quelles actions/ressources liées sont disponibles (releases, artists, etc.)
 
 
 ```
 
 b) Quel est l'avantage pour le frontend Angular qui consomme cette API ?
 ```
-
-
+Découverte dynamique : les URLs viennent de l'API
+Moins de couplage : URLs côté serveur peuvent changer
+Flexibilité : liens conditionnels selon permissions/contexte
+Navigation intuitive : Angular suit les liens au lieu de les construire
 
 ```
 
@@ -346,7 +365,6 @@ Tu peux t'inspirer librement des features existantes. On attend :
 **Bonus** : Que faudrait-il vérifier ou tester en priorité pour valider cette feature ?
 
 ```
-
 
 
 ```
